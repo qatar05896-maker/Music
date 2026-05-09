@@ -411,15 +411,17 @@
         document.getElementById('btn-video').innerText = currentLang.videoBtnOn;
 
         // ==========================================
-        // 2. Global State Variables
+        // 2. Global State Variables & Dynamic URLs
         // ==========================================
         let currentUserPhone = "";
         let ws = null;
         let localStream = null;
 
-        // Backend URLs (Change IP if hosted remotely)
-        const HTTP_API = "http://127.0.0.1:8000"; 
-        const WS_API = "ws://127.0.0.1:8000";
+        // Auto-detect URL for Fly.io or Localhost
+        const currentHost = window.location.host;
+        const isSecure = window.location.protocol === "https:";
+        const HTTP_API = (isSecure ? "https://" : "http://") + currentHost;
+        const WS_API = (isSecure ? "wss://" : "ws://") + currentHost;
 
         // ==========================================
         // 3. Authentication Logic (WhatsApp OTP)
@@ -482,7 +484,6 @@
                 const data = await res.json();
 
                 if (res.ok && data.status === "success") {
-                    // Success! Move to Main App
                     showSection('app-section');
                     initWebSocket();
                 } else {
@@ -501,30 +502,25 @@
         // ==========================================
         function initWebSocket() {
             const roomId = "main_room";
-            // Masking phone number slightly for privacy in chat UI
+            // Masking phone number slightly for privacy
             const displayName = currentUserPhone.substring(0, 5) + "XXXX"; 
 
             ws = new WebSocket(`${WS_API}/ws/${roomId}/${displayName}`);
 
             ws.onopen = () => {
-                // Send a system message indicating join
                 const joinMessage = JSON.stringify({ type: "system", sender: displayName, text: currentLang.joinedMsg });
                 ws.send(joinMessage);
             };
 
             ws.onmessage = (event) => {
                 try {
-                    // Assume the backend sends raw text or JSON. We handle JSON.
                     const data = JSON.parse(event.data);
                     
-                    // If the backend wraps broadcast in JSON
                     if(data.message) {
                         try {
-                            // Check if inner message is also JSON (like our join message)
                             const innerData = JSON.parse(data.message);
                             appendMessage(innerData.sender, innerData.text, innerData.type === "system");
                         } catch (e) {
-                            // Normal text message
                             appendMessage(data.sender, data.message, false);
                         }
                     }
@@ -546,7 +542,6 @@
                 div.className = 'message system';
                 div.innerText = `${sender} ${text}`;
             } else {
-                // Check if I am the sender
                 const displayName = currentUserPhone.substring(0, 5) + "XXXX";
                 const isSelf = sender === displayName;
                 
@@ -571,13 +566,11 @@
             const input = document.getElementById('chatInput');
             const text = input.value.trim();
             if (text && ws && ws.readyState === WebSocket.OPEN) {
-                // Send plain text, backend will wrap it
                 ws.send(text);
                 input.value = '';
             }
         }
 
-        // Send message on Enter key
         document.getElementById('chatInput').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') sendMessage();
         });
@@ -591,7 +584,6 @@
                     localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                     document.getElementById('localVideo').srcObject = localStream;
                     
-                    // Initially disable tracks until user clicks
                     localStream.getAudioTracks()[0].enabled = false;
                     localStream.getVideoTracks()[0].enabled = false;
                 } catch (err) {
