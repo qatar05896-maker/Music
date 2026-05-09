@@ -29,11 +29,11 @@ RUN apt-get update && apt-get install -y \
     htop \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# نقل ملف المكتبات وتسطيبه
-COPY backend/requirements.txt /app/backend/
+# نقل ملف المكتبات وتسطيبه (تم التعديل هنا ليقرأ من مسار الروت)
+COPY requirements.txt /app/
 RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
-RUN pip install --no-cache-dir -r /app/backend/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
 
 # نسخ ملفات المشروع بالكامل
 COPY backend /app/backend
