@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Platform 2026</title>
+    <style>
+        /* CSS iOS Glassmorphism Style */
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.15);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --blur: blur(25px);
+            --text-color: #ffffff;
+            --primary-ios: #007aff;
+            --success-ios: #34c759;
+            --danger-ios: #ff3b30;
+            --bg-gradient: linear-gradient(135deg, #1a2a6c, #112b3c, #203a43, #2c5364);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: var(--blur);
+            -webkit-backdrop-filter: var(--blur);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 1000px;
+            height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: all 0.4s ease;
+        }
+
+        /* Sections */
+        .section {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .section.active {
+            display: flex;
+        }
+
+        h2 {
+            font-weight: 600;
+            margin-bottom: 20px;
+            font-size: 24px;
+            letter-spacing: 0.5px;
+        }
+
+        p.subtitle {
+            margin-bottom: 30px;
+            opacity: 0.8;
+            font-size: 15px;
+        }
+
+        input {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 15px 20px;
+            color: white;
+            font-size: 16px;
+            width: 100%;
+            max-width: 300px;
+            margin-bottom: 20px;
+            outline: none;
+            transition: 0.3s;
+            text-align: center;
+        }
+
+        input:focus {
+            border-color: var(--primary-ios);
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        button {
+            background: var(--primary-ios);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: gray;
+            cursor: not-allowed;
+        }
+
+        /* Main App Area */
+        #app-section {
+            flex-direction: row;
+            padding: 0;
+        }
+
+        .video-container {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--glass-border);
+            position: relative;
+        }
+
+        html[dir="rtl"] .video-container {
+            border-right: none;
+            border-left: 1px solid var(--glass-border);
+        }
+
+        .media-area {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.4);
+            position: relative;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 24px 0 0 0;
+        }
+
+        html[dir="rtl"] video {
+            border-radius: 0 24px 0 0;
+        }
+
+        .controls {
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .controls button {
+            width: auto;
+            border-radius: 50px;
+            padding: 12px 25px;
+        }
+
+        .btn-green { background: var(--success-ios); }
+        .btn-red { background: var(--danger-ios); }
+
+        /* Chat Area */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .chat-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--glass-border);
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px 18px;
+            border-radius: 18px;
+            max-width: 85%;
+            word-wrap: break-word;
+            font-size: 15px;
+            line-height: 1.4;
+        }
+
+        .message.system {
+            background: transparent;
+            color: var(--success-ios);
+            align-self: center;
+            font-size: 13px;
+            border: 1px solid var(--success-ios);
+        }
+
+        .message.self {
+            background: var(--primary-ios);
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        html[dir="rtl"] .message.self {
+            align-self: flex-start;
+            border-bottom-right-radius: 18px;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message.other {
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        html[dir="rtl"] .message.other {
+            align-self: flex-end;
+            border-bottom-left-radius: 18px;
+            border-bottom-right-radius: 4px;
+        }
+
+        .sender-name {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .chat-input-area {
+            padding: 15px;
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input-area input {
+            margin: 0;
+            flex: 1;
+            border-radius: 20px;
+            text-align: start;
+        }
+
+        .chat-input-area button {
+            width: auto;
+            padding: 0 25px;
+            border-radius: 20px;
+        }
+
+        @media (max-width: 768px) {
+            #app-section { flex-direction: column; }
+            .video-container { flex: 1; border: none; border-bottom: 1px solid var(--glass-border); }
+            .chat-container { flex: 1; }
+            video { border-radius: 24px 24px 0 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="glass-panel">
+        
+        <!-- Login Section -->
+        <div id="login-section" class="section active">
+            <h2 id="lang-login-title">تسجيل الدخول</h2>
+            <p id="lang-login-sub" class="subtitle">أدخل رقم هاتفك للمتابعة</p>
+            <input type="tel" id="phoneInput" placeholder="010XXXXXXXX" autocomplete="off">
+            <button id="btn-request-otp" onclick="requestOTP()">طلب الرمز</button>
+            <p id="login-error" style="color: var(--danger-ios); margin-top: 15px; font-size: 14px; display: none;"></p>
+        </div>
+
+        <!-- OTP Section -->
+        <div id="otp-section" class="section">
+            <h2 id="lang-otp-title">رمز التحقق</h2>
+            <p id="lang-otp-sub" class="subtitle">أدخل الرمز المرسل إلى واتساب</p>
+            <input type="text" id="otpInput" placeholder="123456" maxlength="6" autocomplete="off">
+            <button id="btn-verify-otp" onclick="verifyOTP()">تأكيد</button>
+            <p id="otp-error" style="color: var(--danger-ios); margin-top: 15px; font-size: 14px; display: none;"></p>
+        </div>
+
+        <!-- Main App Section (Video & Chat) -->
+        <div id="app-section" class="section">
+            
+            <div class="video-container">
+                <div class="media-area">
+                    <video id="localVideo" autoplay muted playsinline></video>
+                </div>
+                <div class="controls">
+                    <button class="btn-green" id="btn-audio" onclick="toggleAudio()">تشغيل الصوت</button>
+                    <button class="btn-green" id="btn-video" onclick="toggleVideo()">تشغيل الكاميرا</button>
+                </div>
+            </div>
+
+            <div class="chat-container">
+                <div class="chat-header" id="lang-chat-title">غرفة المحادثة</div>
+                <div class="messages" id="messages-container"></div>
+                <div class="chat-input-area">
+                    <input type="text" id="chatInput" placeholder="اكتب رسالة...">
+                    <button id="btn-send" onclick="sendMessage()">إرسال</button>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. Language Detection and i18n
+        // ==========================================
+        const userLang = navigator.language || navigator.userLanguage;
+        const isArabic = userLang.startsWith('ar');
+        
+        document.documentElement.lang = isArabic ? 'ar' : 'en';
+        document.documentElement.dir = isArabic ? 'rtl' : 'ltr';
+
+        const dict = {
+            ar: {
+                loginTitle: "تسجيل الدخول",
+                loginSub: "أدخل رقم هاتفك للمتابعة",
+                phonePlaceholder: "010XXXXXXXX",
+                requestBtn: "طلب الرمز",
+                otpTitle: "رمز التحقق",
+                otpSub: "أدخل الرمز المرسل إلى واتساب",
+                otpPlaceholder: "123456",
+                verifyBtn: "تأكيد",
+                chatTitle: "غرفة المحادثة",
+                chatPlaceholder: "اكتب رسالة...",
+                sendBtn: "إرسال",
+                audioBtnOn: "تشغيل الصوت",
+                audioBtnOff: "إيقاف الصوت",
+                videoBtnOn: "تشغيل الكاميرا",
+                videoBtnOff: "إيقاف الكاميرا",
+                joinedMsg: "انضم إلى المحادثة",
+                systemError: "حدث خطأ في الاتصال بالخادم."
+            },
+            en: {
+                loginTitle: "Login",
+                loginSub: "Enter your phone number to continue",
+                phonePlaceholder: "Phone Number",
+                requestBtn: "Request Code",
+                otpTitle: "Verification",
+                otpSub: "Enter the code sent to WhatsApp",
+                otpPlaceholder: "123456",
+                verifyBtn: "Verify",
+                chatTitle: "Chat Room",
+                chatPlaceholder: "Type a message...",
+                sendBtn: "Send",
+                audioBtnOn: "Enable Audio",
+                audioBtnOff: "Disable Audio",
+                videoBtnOn: "Enable Camera",
+                videoBtnOff: "Disable Camera",
+                joinedMsg: "joined the chat",
+                systemError: "Server connection error."
+            }
+        };
+
+        const currentLang = isArabic ? dict.ar : dict.en;
+
+        // Apply translations
+        document.getElementById('lang-login-title').innerText = currentLang.loginTitle;
+        document.getElementById('lang-login-sub').innerText = currentLang.loginSub;
+        document.getElementById('phoneInput').placeholder = currentLang.phonePlaceholder;
+        document.getElementById('btn-request-otp').innerText = currentLang.requestBtn;
+        
+        document.getElementById('lang-otp-title').innerText = currentLang.otpTitle;
+        document.getElementById('lang-otp-sub').innerText = currentLang.otpSub;
+        document.getElementById('otpInput').placeholder = currentLang.otpPlaceholder;
+        document.getElementById('btn-verify-otp').innerText = currentLang.verifyBtn;
+        
+        document.getElementById('lang-chat-title').innerText = currentLang.chatTitle;
+        document.getElementById('chatInput').placeholder = currentLang.chatPlaceholder;
+        document.getElementById('btn-send').innerText = currentLang.sendBtn;
+        
+        document.getElementById('btn-audio').innerText = currentLang.audioBtnOn;
+        document.getElementById('btn-video').innerText = currentLang.videoBtnOn;
+
+        // ==========================================
+        // 2. Global State Variables
+        // ==========================================
+        let currentUserPhone = "";
+        let ws = null;
+        let localStream = null;
+
+        // Backend URLs (Change IP if hosted remotely)
+        const HTTP_API = "http://127.0.0.1:8000"; 
+        const WS_API = "ws://127.0.0.1:8000";
+
+        // ==========================================
+        // 3. Authentication Logic (WhatsApp OTP)
+        // ==========================================
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+        }
+
+        async function requestOTP() {
+            const phone = document.getElementById('phoneInput').value.trim();
+            const errorElement = document.getElementById('login-error');
+            const btn = document.getElementById('btn-request-otp');
+
+            if (!phone || phone.length < 10) return;
+
+            btn.disabled = true;
+            errorElement.style.display = 'none';
+
+            try {
+                const res = await fetch(`${HTTP_API}/api/auth/request`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone_number: phone })
+                });
+
+                const data = await res.json();
+
+                if (res.ok && data.status === "success") {
+                    currentUserPhone = phone;
+                    showSection('otp-section');
+                } else {
+                    errorElement.innerText = data.detail || data.message || currentLang.systemError;
+                    errorElement.style.display = 'block';
+                }
+            } catch (err) {
+                errorElement.innerText = currentLang.systemError;
+                errorElement.style.display = 'block';
+            }
+            btn.disabled = false;
+        }
+
+        async function verifyOTP() {
+            const otp = document.getElementById('otpInput').value.trim();
+            const errorElement = document.getElementById('otp-error');
+            const btn = document.getElementById('btn-verify-otp');
+
+            if (!otp || otp.length < 4) return;
+
+            btn.disabled = true;
+            errorElement.style.display = 'none';
+
+            try {
+                const res = await fetch(`${HTTP_API}/api/auth/verify`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone_number: currentUserPhone, otp: otp })
+                });
+
+                const data = await res.json();
+
+                if (res.ok && data.status === "success") {
+                    // Success! Move to Main App
+                    showSection('app-section');
+                    initWebSocket();
+                } else {
+                    errorElement.innerText = data.message || currentLang.systemError;
+                    errorElement.style.display = 'block';
+                }
+            } catch (err) {
+                errorElement.innerText = currentLang.systemError;
+                errorElement.style.display = 'block';
+            }
+            btn.disabled = false;
+        }
+
+        // ==========================================
+        // 4. WebSocket Chat Logic
+        // ==========================================
+        function initWebSocket() {
+            const roomId = "main_room";
+            // Masking phone number slightly for privacy in chat UI
+            const displayName = currentUserPhone.substring(0, 5) + "XXXX"; 
+
+            ws = new WebSocket(`${WS_API}/ws/${roomId}/${displayName}`);
+
+            ws.onopen = () => {
+                // Send a system message indicating join
+                const joinMessage = JSON.stringify({ type: "system", sender: displayName, text: currentLang.joinedMsg });
+                ws.send(joinMessage);
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    // Assume the backend sends raw text or JSON. We handle JSON.
+                    const data = JSON.parse(event.data);
+                    
+                    // If the backend wraps broadcast in JSON
+                    if(data.message) {
+                        try {
+                            // Check if inner message is also JSON (like our join message)
+                            const innerData = JSON.parse(data.message);
+                            appendMessage(innerData.sender, innerData.text, innerData.type === "system");
+                        } catch (e) {
+                            // Normal text message
+                            appendMessage(data.sender, data.message, false);
+                        }
+                    }
+                } catch(e) {
+                    console.log("Received raw data:", event.data);
+                }
+            };
+
+            ws.onclose = () => {
+                console.log("WebSocket disconnected");
+            };
+        }
+
+        function appendMessage(sender, text, isSystem) {
+            const container = document.getElementById('messages-container');
+            const div = document.createElement('div');
+            
+            if (isSystem) {
+                div.className = 'message system';
+                div.innerText = `${sender} ${text}`;
+            } else {
+                // Check if I am the sender
+                const displayName = currentUserPhone.substring(0, 5) + "XXXX";
+                const isSelf = sender === displayName;
+                
+                div.className = `message ${isSelf ? 'self' : 'other'}`;
+                
+                if (!isSelf) {
+                    const nameSpan = document.createElement('span');
+                    nameSpan.className = 'sender-name';
+                    nameSpan.innerText = sender;
+                    div.appendChild(nameSpan);
+                }
+                
+                const textNode = document.createTextNode(text);
+                div.appendChild(textNode);
+            }
+
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (text && ws && ws.readyState === WebSocket.OPEN) {
+                // Send plain text, backend will wrap it
+                ws.send(text);
+                input.value = '';
+            }
+        }
+
+        // Send message on Enter key
+        document.getElementById('chatInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // ==========================================
+        // 5. WebRTC (Media Controls Logic)
+        // ==========================================
+        async function getMediaStream() {
+            if (!localStream) {
+                try {
+                    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                    document.getElementById('localVideo').srcObject = localStream;
+                    
+                    // Initially disable tracks until user clicks
+                    localStream.getAudioTracks()[0].enabled = false;
+                    localStream.getVideoTracks()[0].enabled = false;
+                } catch (err) {
+                    console.error("Camera/Mic access denied", err);
+                }
+            }
+            return localStream;
+        }
+
+        async function toggleAudio() {
+            const stream = await getMediaStream();
+            if(!stream) return;
+            const audioTrack = stream.getAudioTracks()[0];
+            const btn = document.getElementById('btn-audio');
+            
+            audioTrack.enabled = !audioTrack.enabled;
+            
+            if(audioTrack.enabled) {
+                btn.innerText = currentLang.audioBtnOff;
+                btn.classList.replace('btn-green', 'btn-red');
+            } else {
+                btn.innerText = currentLang.audioBtnOn;
+                btn.classList.replace('btn-red', 'btn-green');
+            }
+        }
+
+        async function toggleVideo() {
+            const stream = await getMediaStream();
+            if(!stream) return;
+            const videoTrack = stream.getVideoTracks()[0];
+            const btn = document.getElementById('btn-video');
+            
+            videoTrack.enabled = !videoTrack.enabled;
+            
+            if(videoTrack.enabled) {
+                btn.innerText = currentLang.videoBtnOff;
+                btn.classList.replace('btn-green', 'btn-red');
+            } else {
+                btn.innerText = currentLang.videoBtnOn;
+                btn.classList.replace('btn-red', 'btn-green');
+            }
+        }
+    </script>
+</body>
+</html>
