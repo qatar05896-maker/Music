@@ -1,7 +1,7 @@
 # ==========================================
 # المرحلة الأولى: بناء المحرك الحقيقي بلغة Go
 # ==========================================
-FROM golang:1.22-bookworm AS go-builder
+FROM golang:1.26-bookworm AS go-builder
 WORKDIR /app
 
 RUN go mod init webrtc-engine
