@@ -4,17 +4,21 @@ from fastapi import APIRouter, HTTPException
 from datetime import datetime, timedelta
 from pydantic import BaseModel
 
-# إنشاء راوتر لربطه بملف main.py بسهولة
+# إنشاء الراوتر لربطه بملف main.py
 router = APIRouter()
 
-# بيانات ميتا الخاصة بك (تم دمج الأرقام والتوكن الخاص بك)
+# ==========================================
+# بيانات ميتا الرسمية (تحديث 2026)
+# ==========================================
 WHATSAPP_API_URL = "https://graph.facebook.com/v19.0/1065472709991832/messages"
-ACCESS_TOKEN = "EAAeOrQ27bTYBRcISA8dw1GNOpgkTz1l4zgwRjRdeA4DzHpZBzVpWGDA4Wf7DKigZAOszKWvHPLADeIGrblHnH6H6PcfvQnvPDLPxueXZAdlZAWyoDCru76mzPyciCL17LZCbDYduZAe4Aku2ZArNhJbra3k24XULhsBuW45UqNCcEGvMPrTFnbyBZCNO5ZC8HXvGZAAm0IJmomUKzZBSQwOesNNVHslly1EnqjSiffuFXoPtmrG5BXwDaKdMbQx0LPVWPbp6Q8AMdQAjnNSWjE36ZBSNipZBFIo1CUFWMPLQZD"
 
-# ذاكرة مؤقتة لحفظ الأكواد (رقم التليفون: الكود ووقت الانتهاء)
+# التوكن الجديد الخاص بك (صالح لمدة 24 ساعة في وضع الاختبار)
+ACCESS_TOKEN = "EAAeOrQ27bTYBRRlzn06oRbJu3Ld1x855GWzweOxpmZCenAi0MI8SQ4GmSfrz4tiZAEBsPq2ZA6rk0cVx3bHYZCOaZBpYJaylOqBocr78YIQGQ4yCAnb0YMz3lYqDYZAlJjkEMuSQUcuvBBIkPfrGiHwDh9tX80xYcTXQntZAdnQKTUFZB7L3c7vHcPqEznjx6OjilXuh3NGTO65vo1dG4G3p6yGnv534hyl1g8KqFb0miI6Fl9RHLHpxHeKQmcCDuQ4ZD"
+
+# مخزن مؤقت للأكواد (رقم الهاتف: {الكود، وقت الانتهاء})
 otp_store = {}
 
-# نماذج البيانات (Pydantic) عشان FastAPI يفهم الطلبات اللي جاية من الموقع
+# نماذج البيانات لطلبات الـ API
 class PhoneRequest(BaseModel):
     phone_number: str
 
@@ -23,11 +27,11 @@ class VerifyRequest(BaseModel):
     otp: str
 
 def generate_otp():
-    """توليد كود من 6 أرقام"""
+    """توليد رمز مكون من 6 أرقام"""
     return str(random.randint(100000, 999999))
 
 def send_whatsapp_message(phone_number: str, message_body: str):
-    """إرسال الرسالة النصية عبر API ميتا الرسمي"""
+    """إرسال الرسالة عبر API واتساب الرسمي"""
     headers = {
         "Authorization": f"Bearer {ACCESS_TOKEN}",
         "Content-Type": "application/json"
@@ -45,54 +49,67 @@ def send_whatsapp_message(phone_number: str, message_body: str):
     }
     
     response = requests.post(WHATSAPP_API_URL, json=payload, headers=headers)
+    
     if response.status_code == 200:
         return True
     else:
-        print("❌ Meta Error:", response.text)
+        # طباعة الخطأ في سجلات السيرفر (Fly Logs) لتسهيل التصحيح
+        print(f"❌ Meta API Error: {response.status_code} - {response.text}")
         return False
 
 # ==========================================
-# 1. مسار طلب كود الواتساب
+# 1. مسار طلب الكود (Request OTP)
 # ==========================================
 @router.post("/api/auth/request")
 async def request_otp(data: PhoneRequest):
-    # التأكد إن الرقم بيبدأ بكود الدولة (مثال: 2010...)
-    phone_number = data.phone_number.strip()
-    if not phone_number.startswith("20"):
-        # لو اليوزر نسي كود الدولة، بنضيفهوله أوتوماتيك (لمصر)
-        phone_number = "20" + phone_number.lstrip("0")
+    phone = data.phone_number.strip()
+    
+    # تنظيف الرقم والتأكد من وجود كود الدولة (مصر 20)
+    if not phone.startswith("20"):
+        # إزالة الصفر الأول لو موجود وإضافة 20
+        phone = "20" + phone.lstrip("0")
         
     otp = generate_otp()
-    message = f" كود الدخول الخاص بك في منصة البث هو: *{otp}*\n\nالرجاء عدم مشاركة الكود مع أحد."
+    # الرسالة بدون إيموجي كما طلبت
+    message = f"كود التحقق الخاص بك هو: {otp}. الرجاء عدم مشاركته مع اي شخص."
     
-    if send_whatsapp_message(phone_number, message):
-        # حفظ الكود وتحديد مدة صلاحية (5 دقائق)
-        otp_store[phone_number] = {
+    if send_whatsapp_message(phone, message):
+        # حفظ الكود بمدة صلاحية 5 دقائق
+        otp_store[phone] = {
             "otp": otp,
             "expires": datetime.now() + timedelta(minutes=5)
         }
-        return {"status": "success", "message": "تم إرسال الكود بنجاح إلى واتساب."}
+        return {"status": "success", "message": "تم ارسال الكود الى واتساب بنجاح."}
     else:
-        raise HTTPException(status_code=500, detail="فشل إرسال الكود. يرجى التأكد من إرسال رسالة لرقم البوت أولاً لفتح المحادثة.")
+        # في حالة فشل ميتا في الإرسال
+        raise HTTPException(
+            status_code=500, 
+            detail="فشل ارسال الكود. تاكد من صلاحية التوكن او انك بدأت المحادثة مع البوت اولا."
+        )
 
 # ==========================================
-# 2. مسار التحقق من الكود
+# 2. مسار التحقق من الكود (Verify OTP)
 # ==========================================
 @router.post("/api/auth/verify")
 async def verify_otp(data: VerifyRequest):
-    phone_number = data.phone_number.strip()
-    if not phone_number.startswith("20"):
-        phone_number = "20" + phone_number.lstrip("0")
+    phone = data.phone_number.strip()
+    if not phone.startswith("20"):
+        phone = "20" + phone.lstrip("0")
         
     user_otp = data.otp
-    record = otp_store.get(phone_number)
+    record = otp_store.get(phone)
     
+    # التأكد من وجود سجل للرقم وعدم انتهاء الصلاحية
     if not record:
-        return {"status": "error", "message": "لم يتم طلب كود لهذا الرقم أو انتهت الصلاحية."}
+        return {"status": "error", "message": "لم يتم طلب كود لهذا الرقم."}
     
-    if record["otp"] == user_otp and datetime.now() < record["expires"]:
-        # مسح الكود بعد الاستخدام لمنع إعادة الاستخدام
-        del otp_store[phone_number]
-        return {"status": "success", "message": "تم التحقق بنجاح!"}
+    if datetime.now() > record["expires"]:
+        del otp_store[phone]
+        return {"status": "error", "message": "انتهت صلاحية الكود."}
     
-    return {"status": "error", "message": "الكود خاطئ أو انتهت صلاحيته."}
+    if record["otp"] == user_otp:
+        # مسح الكود بعد التحقق بنجاح لمنع استخدامه مرة أخرى
+        del otp_store[phone]
+        return {"status": "success", "message": "تم التحقق بنجاح."}
+    else:
+        return {"status": "error", "message": "الكود الذي ادخلته غير صحيح."}
