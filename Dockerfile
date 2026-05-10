@@ -29,7 +29,7 @@ RUN apt-get update && apt-get install -y \
     htop \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# نقل ملف المكتبات وتسطيبه (تم التعديل هنا ليقرأ من مسار الروت)
+# نقل ملف المكتبات وتسطيبه
 COPY requirements.txt /app/
 RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
@@ -41,17 +41,41 @@ COPY frontend /app/frontend
 COPY --from=go-builder /app/webrtc-engine /usr/local/bin/webrtc-engine
 RUN chmod +x /usr/local/bin/webrtc-engine
 
-# إعداد Nginx على بورت 8080 (البورت المفضل لـ Fly.io)
+# إعداد Nginx على بورت 8080 وتوزيع الطلبات
 RUN echo 'server { \
     listen 8080; \
     server_name _; \
-    location / { root /app/frontend; index index.html; } \
-    location /ws { proxy_pass http://127.0.0.1:8000; proxy_set_header Upgrade $http_upgrade; proxy_set_header Connection "Upgrade"; } \
-    location /api/ { proxy_pass http://127.0.0.1:8000; } \
-    location /sdp { proxy_pass http://127.0.0.1:8081; } \
+    \
+    # الواجهة الأمامية \
+    location / { \
+        root /app/frontend; \
+        index index.html; \
+        try_files $uri $uri/ /index.html; \
+    } \
+    \
+    # الشات (WebSockets) - بايثون 8000 \
+    location /ws/ { \
+        proxy_pass http://127.0.0.1:8000; \
+        proxy_http_version 1.1; \
+        proxy_set_header Upgrade $http_upgrade; \
+        proxy_set_header Connection "Upgrade"; \
+        proxy_set_header Host $host; \
+    } \
+    \
+    # الواتساب والـ API - بايثون 8000 \
+    location /api/ { \
+        proxy_pass http://127.0.0.1:8000; \
+        proxy_set_header Host $host; \
+    } \
+    \
+    # مكالمات الفيديو والصوت - جو 8081 \
+    location /join { \
+        proxy_pass http://127.0.0.1:8081; \
+        proxy_set_header Host $host; \
+    } \
 }' > /etc/nginx/sites-available/default
 
-# إعداد Supervisor
+# إعداد Supervisor لتشغيل كل الخدمات
 RUN echo '[supervisord]\n\
 nodaemon=true\n\
 user=root\n\
@@ -59,8 +83,8 @@ user=root\n\
 command=nginx -g "daemon off;"\n\
 autorestart=true\n\
 \n[program:fastapi_backend]\n\
-command=/opt/venv/bin/uvicorn backend.main:app --host 0.0.0.0 --port 8000\n\
-directory=/app\n\
+command=/opt/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000\n\
+directory=/app/backend\n\
 autorestart=true\n\
 \n[program:webrtc_engine]\n\
 command=/usr/local/bin/webrtc-engine\n\
