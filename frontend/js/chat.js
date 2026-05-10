@@ -58,6 +58,8 @@ class ChatEngineState {
 
     addMessage(roomId, msgData) {
         if (!this.messages[roomId]) this.messages[roomId] = [];
+        // تأكيد وجود ID للرسالة عشان المنيو
+        if (!msgData.id) msgData.id = 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
         this.messages[roomId].push(msgData);
         this.saveHistory();
     }
@@ -103,7 +105,7 @@ class VirtualChatList {
 
         this.container.innerHTML = '';
         messagesToRender.forEach((msg, index) => {
-            // تفعيل الأنيميشن لآخر رسالة فقط (عشان ميعملش أنيميشن للقديم كله)
+            // تفعيل الأنيميشن لآخر رسالة فقط
             const isLast = index === messagesToRender.length - 1;
             this.container.insertAdjacentHTML('beforeend', this.createMessageHTML(msg, isLast));
         });
@@ -113,7 +115,7 @@ class VirtualChatList {
 
     createMessageHTML(msg, isNew) {
         if (msg.isSystem) {
-            return `<div class="system-msg fade-in-msg">${msg.text}</div>`;
+            return `<div class="system-msg fade-in-msg" data-mid="${msg.id}">${msg.text}</div>`;
         }
 
         const isSelf = msg.sender === chatState.currentUser;
@@ -124,9 +126,10 @@ class VirtualChatList {
         const senderName = isSelf ? '' : `<span class="tg-msg-sender">${msg.sender}</span>`;
         const animClass = isNew ? 'fade-in-msg' : '';
 
+        // تم إضافة كلاس "bubble" والـ "data-mid" عشان الـ Context Menu تقدر تمسك الرسالة
         return `
             <div class="tg-msg-wrap ${wrapClass} ${animClass}">
-                <div class="tg-msg-bubble">
+                <div class="tg-msg-bubble bubble" data-mid="${msg.id}" data-peer-id="${msg.sender}">
                     ${senderName}
                     <span class="tg-msg-text">${msg.text.replace(/\n/g, '<br>')}</span>
                     <div class="tg-msg-meta">
@@ -268,7 +271,8 @@ const ChatUI = {
             .tg-msg-wrap.self { align-self: flex-end; }
             .tg-msg-wrap.other { align-self: flex-start; }
             
-            .tg-msg-bubble { padding: 8px 12px; border-radius: 18px; font-size: 15px; line-height: 1.4; position: relative; box-shadow: 0 1px 2px rgba(0,0,0,0.2); word-wrap: break-word; }
+            /* أضفنا كلاس bubble عشان الـ Context Menu يلقطها */
+            .tg-msg-bubble { padding: 8px 12px; border-radius: 18px; font-size: 15px; line-height: 1.4; position: relative; box-shadow: 0 1px 2px rgba(0,0,0,0.2); word-wrap: break-word; cursor: context-menu; }
             .tg-msg-wrap.self .tg-msg-bubble { background: var(--ios-blue); color: white; border-bottom-right-radius: 4px; }
             /* Frosted Glass Bubble for Others */
             .tg-msg-wrap.other .tg-msg-bubble { background: rgba(40, 40, 40, 0.65); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); border: 1px solid rgba(255,255,255,0.05); color: white; border-bottom-left-radius: 4px; }
@@ -324,6 +328,7 @@ const ChatUI = {
                 </div>
 
                 <div class="tg-main">
+                    <!-- ربط الهيدر بفتح البروفايل -->
                     <div class="tg-header" onclick="ChatUI.showChatInfo()">
                         <button class="tg-input-btn" style="padding:0; margin-left:15px; display:none;" id="mobile-back-btn" onclick="event.stopPropagation(); ChatUI.toggleMobileSidebar()">
                             <i class="fa-solid fa-arrow-right"></i>
@@ -348,7 +353,6 @@ const ChatUI = {
 
                     <div class="tg-input-area">
                         <button class="tg-input-btn"><i class="fa-solid fa-paperclip"></i></button>
-                        <!-- تم تغيير input إلى textarea لدعم الارتفاع المطاطي -->
                         <textarea id="chatInput" placeholder="رسالة..." rows="1"></textarea>
                         <button class="tg-send-btn" id="btn-send-toggle" onclick="window.sendChatMessage()">
                             <i class="fa-solid fa-microphone" id="send-icon"></i>
@@ -463,8 +467,18 @@ const ChatUI = {
         }
     },
     
+    // الدالة دي بقت مربوطة بـ ProfileSidebar اللي عملناه في ui_core.js
     showChatInfo: () => {
-        console.log("Show chat profile info");
+        const contact = chatState.contacts.find(c => c.id === chatState.activeRoom);
+        if (contact && window.ProfileSidebar) {
+            const profileData = {
+                id: contact.id,
+                name: contact.name,
+                phone: contact.type === 'private' ? contact.name : '',
+                bio: contact.type === 'group' ? 'مجموعة محادثة عامة' : 'مرحباً بك في المنصة 🚀'
+            };
+            window.ProfileSidebar.open(profileData);
+        }
     }
 };
 
@@ -495,9 +509,23 @@ const ChatEngine = {
                 if (data.message && typeof data.message === 'string') {
                     try {
                         const innerData = JSON.parse(data.message);
-                        messageData = { sender: innerData.sender, text: innerData.text, isSystem: innerData.type === 'system', time: new Date().toISOString(), status: 'read' };
+                        messageData = { 
+                            id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                            sender: innerData.sender, 
+                            text: innerData.text, 
+                            isSystem: innerData.type === 'system', 
+                            time: new Date().toISOString(), 
+                            status: 'read' 
+                        };
                     } catch (e) {
-                        messageData = { sender: data.sender, text: data.message, isSystem: false, time: new Date().toISOString(), status: 'read' };
+                        messageData = { 
+                            id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                            sender: data.sender, 
+                            text: data.message, 
+                            isSystem: false, 
+                            time: new Date().toISOString(), 
+                            status: 'read' 
+                        };
                     }
                 }
 
@@ -572,7 +600,14 @@ window.sendChatMessage = () => {
     
     if (text && chatState.socket && chatState.socket.readyState === WebSocket.OPEN) {
         chatState.socket.send(JSON.stringify({ type: "chat", sender: chatState.currentUser, text: text }));
-        const msgObj = { sender: chatState.currentUser, text: text, isSystem: false, time: new Date().toISOString(), status: 'sent' };
+        const msgObj = { 
+            id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+            sender: chatState.currentUser, 
+            text: text, 
+            isSystem: false, 
+            time: new Date().toISOString(), 
+            status: 'sent' 
+        };
         chatState.addMessage(chatState.activeRoom, msgObj);
         
         const contact = chatState.contacts.find(c => c.id === chatState.activeRoom);
