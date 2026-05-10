@@ -2,49 +2,73 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Platform 2026 | Dark Glass</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-</head>
-<body>
+    <!-- دعم الشاشات الكاملة (Notch) في الموبايل وجعله يتصرف كتطبيق Native -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
+    <title>Platform 2026 | Dark Glass Engine</title>
+
+    <!-- FontAwesome للأيقونات (الإصدار الأحدث) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- ملف التنسيقات الرئيسي -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="theme-dark">
+
+    <!-- ========================================== -->
+    <!-- 1. خلفية زجاجية متحركة (Blobs)             -->
+    <!-- ========================================== -->
     <div class="background-blobs">
         <div class="blob blob-1"></div>
         <div class="blob blob-2"></div>
     </div>
 
-    <div id="auth-modal" class="glass-modal active">
-        <div class="modal-content">
+    <!-- ========================================== -->
+    <!-- 2. شاشة تسجيل الدخول (Auth Overlay)        -->
+    <!-- ========================================== -->
+    <div id="auth-modal" class="auth-overlay active glass-panel">
+        <div class="glass-modal">
             <div class="logo-area">
-                <i class="fa-solid fa-bolt"></i>
+                <i class="fa-brands fa-telegram"></i>
             </div>
             <h2 id="auth-title">تسجيل الدخول</h2>
             <p id="auth-subtitle">أدخل رقم هاتفك للمتابعة</p>
             
+            <!-- حقل رقم الهاتف -->
             <div class="input-group">
                 <i class="fa-solid fa-phone"></i>
-                <input type="tel" id="phoneInput" placeholder="2010XXXXXXXX" autocomplete="off">
+                <input type="tel" id="phoneInput" placeholder="رقم الهاتف (مثال: 2010...)" autocomplete="off">
             </div>
 
+            <!-- حقل رمز التحقق (OTP) - مخفي افتراضياً -->
             <div class="input-group hidden" id="otp-group">
                 <i class="fa-solid fa-lock"></i>
-                <input type="text" id="otpInput" placeholder="أدخل الرمز (6 أرقام)" maxlength="6" autocomplete="off">
+                <input type="text" id="otpInput" placeholder="الرمز (6 أرقام)" maxlength="6" autocomplete="off">
             </div>
 
-            <button id="btn-auth" class="ios-btn primary" onclick="handleAuth()">طلب الرمز</button>
+            <button id="btn-auth" class="ios-btn primary" onclick="handleAuth()">التالي</button>
             <p id="auth-error" class="error-msg"></p>
         </div>
     </div>
 
-    <div id="app-container" class="glass-container hidden">
+    <!-- ========================================== -->
+    <!-- 3. الهيكل الرئيسي للتطبيق (App Layout)     -->
+    <!-- مخفي حتى يتم تسجيل الدخول بنجاح            -->
+    <!-- ========================================== -->
+    <div id="app-container" class="telegram-app-layout hidden">
         
-        <div class="video-section">
+        <!-- أداة مكالمات الفيديو (Picture-in-Picture) عائمة فوق الشات -->
+        <div id="video-overlay" class="video-pip video-section hidden glass-panel">
             <div class="video-wrapper">
+                <!-- الفيديوهات -->
                 <video id="remoteVideo" autoplay playsinline></video>
                 <video id="localVideo" autoplay muted playsinline></video>
                 
-                <div class="call-controls glass-panel">
+                <!-- أزرار التحكم في المكالمة -->
+                <div class="call-controls">
                     <button id="btn-mic" class="control-btn active" onclick="toggleMic()">
                         <i class="fa-solid fa-microphone"></i>
                     </button>
@@ -54,31 +78,41 @@
                     <button id="btn-flip" class="control-btn" onclick="flipCamera()">
                         <i class="fa-solid fa-camera-rotate"></i>
                     </button>
+                    <button id="btn-end" class="control-btn danger" onclick="RTCEngine.endCall()">
+                        <i class="fa-solid fa-phone-slash"></i>
+                    </button>
                 </div>
             </div>
         </div>
 
-        <div class="chat-section glass-panel">
-            <div class="chat-header">
-                <h3><i class="fa-solid fa-messages"></i> غرفة المحادثة</h3>
-                <span id="currentUserDisplay" class="user-badge"></span>
-            </div>
-            
-            <div id="messages-container" class="messages-area">
-                </div>
-            
-            <div class="chat-input-area">
-                <input type="text" id="chatInput" placeholder="اكتب رسالتك هنا...">
-                <button id="btn-send" class="ios-btn send-btn" onclick="sendMessage()">
-                    <i class="fa-solid fa-paper-plane"></i>
+        <!-- الحاوية الأساسية للشات -->
+        <!-- ملف chat.js (ChatUI.buildLayout) سيقوم بحقن القائمة الجانبية والشات هنا -->
+        <div class="chat-section w-100 h-100">
+            <!-- جافاسكريبت سيبني الواجهة هنا -->
+        </div>
+
+        <!-- القائمة الجانبية اليمنى (معلومات الحساب والميديا) مخفية افتراضياً -->
+        <!-- يتم فتحها عند الضغط على اسم المستخدم في أعلى الشات -->
+        <div class="right-sidebar hidden glass-panel" id="right-sidebar">
+            <div class="profile-header">
+                <button class="close-sidebar-btn" onclick="toggleRightSidebar()">
+                    <i class="fa-solid fa-xmark"></i>
                 </button>
+                <h3>معلومات الحساب</h3>
+            </div>
+            <div class="profile-content" id="profile-content-area">
+                <!-- محتوى البروفايل (صور، ملفات، روابط) سيتم حقنه هنا -->
             </div>
         </div>
 
     </div>
 
+    <!-- ========================================== -->
+    <!-- 4. ربط ملفات الجافاسكريبت                 -->
+    <!-- ========================================== -->
     <script src="js/auth.js"></script>
     <script src="js/webrtc.js"></script>
     <script src="js/chat.js"></script>
+
 </body>
 </html>
