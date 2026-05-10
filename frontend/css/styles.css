@@ -1,0 +1,320 @@
+/* ==========================================
+   iOS Dark Glass Architecture 2026
+   ========================================== */
+
+:root {
+    --ios-black: rgba(10, 10, 10, 0.75);
+    --ios-bg: #000000;
+    --ios-blue: #007AFF;
+    --ios-green: #34C759;
+    --ios-red: #FF3B30;
+    --glass-border: rgba(255, 255, 255, 0.12);
+    --glass-shimmer: rgba(255, 255, 255, 0.05);
+    --text-primary: #FFFFFF;
+    --text-secondary: rgba(255, 255, 255, 0.6);
+    --blur-val: blur(35px) saturate(180%);
+    --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    background-color: var(--ios-bg);
+    font-family: var(--font-stack);
+    color: var(--text-primary);
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    direction: rtl;
+}
+
+/* --- خلفية الأنيميشن (Blobs) --- */
+.background-blobs {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    overflow: hidden;
+    filter: blur(80px);
+}
+
+.blob {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.5;
+    animation: move 20s infinite alternate;
+}
+
+.blob-1 {
+    width: 500px;
+    height: 500px;
+    background: linear-gradient(135deg, #1a2a6c, #007AFF);
+    top: -10%;
+    left: -10%;
+}
+
+.blob-2 {
+    width: 400px;
+    height: 400px;
+    background: linear-gradient(135deg, #b21f1f, #fdbb2d);
+    bottom: -10%;
+    right: -10%;
+    animation-delay: -5s;
+}
+
+@keyframes move {
+    from { transform: translate(0, 0) scale(1); }
+    to { transform: translate(100px, 100px) scale(1.2); }
+}
+
+/* --- العناصر الزجاجية الأساسية --- */
+.glass-panel, .glass-modal, .glass-container {
+    background: var(--ios-black);
+    backdrop-filter: var(--blur-val);
+    -webkit-backdrop-filter: var(--blur-val);
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* --- نافذة تسجيل الدخول --- */
+.glass-modal {
+    position: relative;
+    width: 90%;
+    max-width: 400px;
+    padding: 40px 30px;
+    border-radius: 35px;
+    text-align: center;
+    z-index: 100;
+}
+
+.logo-area {
+    font-size: 50px;
+    color: var(--ios-blue);
+    margin-bottom: 20px;
+    filter: drop-shadow(0 0 15px var(--ios-blue));
+}
+
+h2 { font-size: 28px; margin-bottom: 8px; font-weight: 700; }
+.subtitle { font-size: 15px; color: var(--text-secondary); margin-bottom: 30px; }
+
+/* --- الحقول والأزرار --- */
+.input-group {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.input-group i {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+}
+
+input {
+    width: 100%;
+    padding: 16px 45px 16px 15px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid transparent;
+    border-radius: 18px;
+    color: #fff;
+    font-size: 16px;
+    outline: none;
+    transition: 0.3s;
+}
+
+input:focus {
+    border-color: var(--ios-blue);
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.ios-btn {
+    width: 100%;
+    padding: 16px;
+    border-radius: 18px;
+    border: none;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s active;
+    background: var(--ios-blue);
+    color: #fff;
+}
+
+.ios-btn:active { transform: scale(0.96); opacity: 0.8; }
+
+/* --- الحاوية الرئيسية للتطبيق --- */
+.glass-container {
+    width: 95%;
+    height: 92vh;
+    max-width: 1200px;
+    border-radius: 40px;
+    display: flex;
+    overflow: hidden;
+    gap: 1px; /* فاصل بسيط بين الأقسام */
+}
+
+/* --- قسم الفيديو --- */
+.video-section {
+    flex: 2;
+    position: relative;
+    background: #000;
+}
+
+.video-wrapper {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+#remoteVideo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#localVideo {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 120px;
+    height: 180px;
+    background: #222;
+    border-radius: 20px;
+    object-fit: cover;
+    border: 2px solid var(--glass-border);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    z-index: 10;
+}
+
+/* --- شريط التحكم العائم --- */
+.call-controls {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 25px;
+    border-radius: 50px;
+    display: flex;
+    gap: 20px;
+    z-index: 20;
+}
+
+.control-btn {
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.control-btn.active { background: rgba(255, 255, 255, 0.25); }
+.control-btn:hover { background: var(--ios-blue); }
+.control-btn.danger { background: var(--ios-red); }
+
+/* --- قسم الشات --- */
+.chat-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: rgba(0, 0, 0, 0.3);
+    min-width: 350px;
+}
+
+.chat-header {
+    padding: 25px;
+    border-bottom: 1px solid var(--glass-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.messages-area {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* سكرول بار آيفون مخفي */
+.messages-area::-webkit-scrollbar { width: 4px; }
+.messages-area::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
+
+/* فقاعات الشات */
+.msg {
+    max-width: 80%;
+    padding: 12px 16px;
+    border-radius: 20px;
+    font-size: 15px;
+    line-height: 1.4;
+    position: relative;
+}
+
+.msg.self {
+    align-self: flex-start;
+    background: var(--ios-blue);
+    border-bottom-right-radius: 5px;
+}
+
+.msg.other {
+    align-self: flex-end;
+    background: rgba(255, 255, 255, 0.12);
+    border-bottom-left-radius: 5px;
+}
+
+.chat-input-area {
+    padding: 20px;
+    display: flex;
+    gap: 10px;
+    border-top: 1px solid var(--glass-border);
+}
+
+.chat-input-area input {
+    flex: 1;
+    padding: 12px 20px;
+    border-radius: 25px;
+}
+
+.send-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* --- حالات العرض والطلب --- */
+.hidden { display: none !important; }
+.error-msg { color: var(--ios-red); font-size: 13px; margin-top: 15px; }
+
+/* --- التجاوب مع الموبايل --- */
+@media (max-width: 850px) {
+    .glass-container {
+        flex-direction: column;
+        height: 100vh;
+        width: 100vw;
+        border-radius: 0;
+    }
+    .video-section { height: 40%; }
+    .chat-section { height: 60%; min-width: 100%; }
+    #localVideo { width: 80px; height: 120px; }
+}
