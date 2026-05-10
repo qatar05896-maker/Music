@@ -109,7 +109,8 @@ func (r *Room) BroadcastTrack(newTrack *webrtc.TrackRemote, receiver *webrtc.RTP
 			if readErr != nil {
 				return // اليوزر قفل المكالمة
 			}
-			if writeErr := localTrack.Write(rtpBuf[:i]); writeErr != nil && writeErr != io.ErrClosedPipe {
+			// التعديل تم هنا: إضافة _, قبل writeErr لاستقبال القيمتين
+			if _, writeErr := localTrack.Write(rtpBuf[:i]); writeErr != nil && writeErr != io.ErrClosedPipe {
 				return
 			}
 		}
