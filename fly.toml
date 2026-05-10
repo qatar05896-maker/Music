@@ -10,7 +10,7 @@ primary_region = "fra"
 auto_start_machines = true
 auto_stop_machines = false
 force_https = true
-internal_port = 8081
+internal_port = 8080
 min_machines_running = 1
 processes = [ "app" ]
 
