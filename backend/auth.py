@@ -1,19 +1,27 @@
 import random
-import requests
 from fastapi import APIRouter, HTTPException
 from datetime import datetime, timedelta
 from pydantic import BaseModel
+from pyrogram import Client
+from pyrogram.errors import RPCError
 
 # إنشاء الراوتر لربطه بملف main.py
 router = APIRouter()
 
 # ==========================================
-# بيانات ميتا الرسمية (تحديث 2026)
+# بيانات تيليجرام (Kurigram / Pyrogram)
 # ==========================================
-WHATSAPP_API_URL = "https://graph.facebook.com/v19.0/1065472709991832/messages"
+API_ID = 29124455
+API_HASH = "3530cc0b47abc8aa0705634c15de1ba7"
+SESSION_STRING = "BAG8Z2cAJnc_5AvaCGFCFNEECCl3IoQRr2WtSNyaFVomFSV0hquQOgkWt4hcEp3sS9fseLuQaqKXaw2StqJEd-LrcfoiU69ofIUbCo16GuNgxruxMFsFeYGLes5AThCIK5JoimJDu1sDO1ZviPzUIOE3nSP99p3x7y2PXzbts62ZG_ze4vNZrJKab1e1hG-SmkPkpEY-bB9n8nwJmTr-dvV3MJeaH0UgiSyvR1Emzpe62mAiowF5tmiGZgTgK3WADkWSsb00oOGjs2H8btQnfKD7fs6B_gMMzqdDiTgBeQPxRsEEQn1ZSGRfK7zDmq6bOVNv_-aEHuf0tuLbr0pLPubg556HQgAAAAHSHlHnAA"
 
-# التوكن الجديد الخاص بك (صالح لمدة 24 ساعة في وضع الاختبار)
-ACCESS_TOKEN = "EAAeOrQ27bTYBRRlzn06oRbJu3Ld1x855GWzweOxpmZCenAi0MI8SQ4GmSfrz4tiZAEBsPq2ZA6rk0cVx3bHYZCOaZBpYJaylOqBocr78YIQGQ4yCAnb0YMz3lYqDYZAlJjkEMuSQUcuvBBIkPfrGiHwDh9tX80xYcTXQntZAdnQKTUFZB7L3c7vHcPqEznjx6OjilXuh3NGTO65vo1dG4G3p6yGnv534hyl1g8KqFb0miI6Fl9RHLHpxHeKQmcCDuQ4ZD"
+# تهيئة عميل Kurigram باستخدام الـ Session String
+client = Client(
+    name="otp_bot",
+    api_id=API_ID,
+    api_hash=API_HASH,
+    session_string=SESSION_STRING
+)
 
 # مخزن مؤقت للأكواد (رقم الهاتف: {الكود، وقت الانتهاء})
 otp_store = {}
@@ -30,31 +38,26 @@ def generate_otp():
     """توليد رمز مكون من 6 أرقام"""
     return str(random.randint(100000, 999999))
 
-def send_whatsapp_message(phone_number: str, message_body: str):
-    """إرسال الرسالة عبر API واتساب الرسمي"""
-    headers = {
-        "Authorization": f"Bearer {ACCESS_TOKEN}",
-        "Content-Type": "application/json"
-    }
+async def send_telegram_message(phone_number: str, message_body: str):
+    """إرسال الرسالة عبر تيليجرام باستخدام Kurigram"""
+    # التأكد من أن العميل متصل
+    if not client.is_connected:
+        await client.connect()
+        
+    # تيليجرام يحتاج إلى علامة + قبل رقم الهاتف الدولي
+    tg_phone = f"+{phone_number}"
     
-    payload = {
-        "messaging_product": "whatsapp",
-        "recipient_type": "individual",
-        "to": phone_number,
-        "type": "text",
-        "text": {
-            "preview_url": False,
-            "body": message_body
-        }
-    }
-    
-    response = requests.post(WHATSAPP_API_URL, json=payload, headers=headers)
-    
-    if response.status_code == 200:
+    try:
+        # إرسال الرسالة للرقم
+        await client.send_message(tg_phone, message_body)
         return True
-    else:
-        # طباعة الخطأ في سجلات السيرفر (Fly Logs) لتسهيل التصحيح
-        print(f"❌ Meta API Error: {response.status_code} - {response.text}")
+    except RPCError as e:
+        # طباعة خطأ تيليجرام في سجلات السيرفر
+        print(f"❌ Kurigram API Error: {e}")
+        return False
+    except Exception as e:
+        # طباعة أي أخطاء أخرى
+        print(f"❌ General Error: {e}")
         return False
 
 # ==========================================
@@ -70,21 +73,23 @@ async def request_otp(data: PhoneRequest):
         phone = "20" + phone.lstrip("0")
         
     otp = generate_otp()
-    # الرسالة بدون إيموجي كما طلبت
-    message = f"كود التحقق الخاص بك هو: {otp}. الرجاء عدم مشاركته مع اي شخص."
+    message = f"كود الدخول الخاص بك في منصة البث هو: **{otp}**\n\nالرجاء عدم مشاركة الكود مع أحد."
     
-    if send_whatsapp_message(phone, message):
+    # إرسال الرسالة عبر تيليجرام
+    is_sent = await send_telegram_message(phone, message)
+    
+    if is_sent:
         # حفظ الكود بمدة صلاحية 5 دقائق
         otp_store[phone] = {
             "otp": otp,
             "expires": datetime.now() + timedelta(minutes=5)
         }
-        return {"status": "success", "message": "تم ارسال الكود الى واتساب بنجاح."}
+        return {"status": "success", "message": "تم إرسال الكود إلى تيليجرام بنجاح."}
     else:
-        # في حالة فشل ميتا في الإرسال
+        # في حالة فشل الإرسال (الرقم غير مسجل، أو حسابك يحتاج لإضافة الرقم لجهات الاتصال أولاً)
         raise HTTPException(
             status_code=500, 
-            detail="فشل ارسال الكود. تاكد من صلاحية التوكن او انك بدأت المحادثة مع البوت اولا."
+            detail="فشل إرسال الكود. تأكد من أن الرقم مسجل على تيليجرام أو قمت بمراسلة الحساب مسبقاً."
         )
 
 # ==========================================
@@ -112,4 +117,4 @@ async def verify_otp(data: VerifyRequest):
         del otp_store[phone]
         return {"status": "success", "message": "تم التحقق بنجاح."}
     else:
-        return {"status": "error", "message": "الكود الذي ادخلته غير صحيح."}
+        return {"status": "error", "message": "الكود الذي أدخلته غير صحيح."}
