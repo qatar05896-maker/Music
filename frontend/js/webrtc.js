@@ -2,6 +2,7 @@
  * ============================================================================
  * Platform 2026 - Ultra-Low Latency WebRTC Engine (Go/Pion Backend)
  * Capabilities: 4K@60FPS Video, 48kHz Stereo Audio, Sub-50ms Latency
+ * UI Features: Telegram/iOS Frosted Glass Canvas Blur Background
  * ============================================================================
  */
 
@@ -44,6 +45,7 @@ const RTCState = {
 const RTCUI = {
     elements: {
         videoSection: document.querySelector('.video-section'),
+        videoWrapper: document.querySelector('.video-wrapper'),
         localVideo: document.getElementById('localVideo'),
         remoteVideo: document.getElementById('remoteVideo'),
         btnMic: document.getElementById('btn-mic'),
@@ -55,8 +57,8 @@ const RTCUI = {
         if (!RTCUI.elements.videoSection) return;
         if (show) {
             RTCUI.elements.videoSection.style.display = 'flex';
-            // تصغير الشات لو كنا فاتحين الكاميرا
-            if(window.innerWidth > 768) {
+            // تحجيم ذكي للشاشات
+            if (window.innerWidth > 768) {
                 document.querySelector('.chat-section').style.flex = '1';
                 RTCUI.elements.videoSection.style.flex = '2';
             } else {
@@ -80,6 +82,70 @@ const RTCUI = {
 };
 
 // ==========================================
+// Telegram/iOS Video Canvas Blur (Frosted Glass)
+// ==========================================
+const applyVideoCanvasBlur = (videoElement, isBackground = false) => {
+    if (!videoElement || !videoElement.parentElement) return;
+
+    // إزالة أي Canvas قديم لمنع استهلاك الذاكرة
+    const existingCanvas = videoElement.parentElement.querySelector(`.call-video-blur-${videoElement.id}`);
+    if (existingCanvas) existingCanvas.remove();
+
+    const canvas = document.createElement('canvas');
+    canvas.classList.add(`call-video-blur-${videoElement.id}`);
+    
+    // تصغير الحجم جداً لرفع الأداء (16x16 زي كود تيليجرام بالظبط)
+    const size = 16; 
+    canvas.width = size;
+    canvas.height = size;
+
+    // تنسيق الـ Canvas ليكون خلف الفيديو (Frosted Glass Effect)
+    Object.assign(canvas.style, {
+        position: 'absolute',
+        top: '0',
+        left: '0',
+        width: '100%',
+        height: '100%',
+        zIndex: '0', // خلف الفيديو
+        filter: 'blur(25px) saturate(180%) brightness(0.8)', // تأثير iOS ونغمشة تيليجرام
+        transform: 'scale(1.2)', // تكبير خفيف لتغطية الحواف السوداء الناتجة عن البلور
+        pointerEvents: 'none',
+        opacity: '0.9'
+    });
+
+    // تهيئة الحاوية (Container)
+    videoElement.parentElement.style.position = 'relative';
+    videoElement.parentElement.style.overflow = 'hidden';
+    videoElement.parentElement.insertBefore(canvas, videoElement);
+
+    // رفع الفيديو فوق الـ Canvas
+    videoElement.style.position = 'relative';
+    videoElement.style.zIndex = '1';
+
+    // لو الفيديو للمتصل الآخر (Remote)، نخليه شفاف شوية عشان الخلفية تبان بشكل أحلى لو حبينا
+    if (isBackground) {
+        // يمكن تعديل الـ opacity حسب رغبتك في التصميم
+        // videoElement.style.opacity = '0.95'; 
+    }
+
+    const ctx = canvas.getContext('2d', { alpha: false });
+    
+    // دالة رسم الإطارات (Loop)
+    const renderFrame = () => {
+        if (videoElement.videoWidth > 0 && canvas.isConnected && !videoElement.paused) {
+            ctx.drawImage(videoElement, 0, 0, videoElement.videoWidth, videoElement.videoHeight, 0, 0, canvas.width, canvas.height);
+        }
+        if (canvas.isConnected) {
+            requestAnimationFrame(renderFrame);
+        }
+    };
+
+    // بدء الرسم فور تشغيل الفيديو
+    videoElement.addEventListener('play', () => requestAnimationFrame(renderFrame), { once: true });
+    if (!videoElement.paused) requestAnimationFrame(renderFrame);
+};
+
+// ==========================================
 // Core Engine Methods
 // ==========================================
 const RTCEngine = {
@@ -87,7 +153,11 @@ const RTCEngine = {
         try {
             RTCState.localStream = await navigator.mediaDevices.getUserMedia(RTCConfig.mediaConstraints);
             RTCUI.elements.localVideo.srcObject = RTCState.localStream;
-            RTCUI.elements.localVideo.muted = true; // نمنع صدى الصوت من جهازك
+            RTCUI.elements.localVideo.muted = true; // نمنع صدى الصوت
+            
+            // تطبيق تأثير iOS Blur على الكاميرا المحلية
+            applyVideoCanvasBlur(RTCUI.elements.localVideo, false);
+            
             return true;
         } catch (error) {
             console.error("[WebRTC] فشل الوصول للكاميرا/المايك:", error);
@@ -99,16 +169,19 @@ const RTCEngine = {
     createPeerConnection: () => {
         RTCState.pc = new RTCPeerConnection(RTCConfig.peerConnection);
 
-        // إضافة المسارات (Tracks) للاتصال عشان تروح لسيرفر Go
+        // إضافة المسارات (Tracks) للاتصال
         RTCState.localStream.getTracks().forEach(track => {
             RTCState.pc.addTrack(track, RTCState.localStream);
         });
 
-        // استقبال الميديا من سيرفر Go (باقي الأعضاء)
+        // استقبال الميديا من سيرفر Pion (باقي الأعضاء)
         RTCState.pc.ontrack = (event) => {
             console.log("[WebRTC] استلام مسار ميديا جديد:", event.track.kind);
             if (RTCUI.elements.remoteVideo.srcObject !== event.streams[0]) {
                 RTCUI.elements.remoteVideo.srcObject = event.streams[0];
+                
+                // تطبيق تأثير الخلفية الضبابية (Telegram Vibe) على فيديو الطرف التاني
+                applyVideoCanvasBlur(RTCUI.elements.remoteVideo, true);
             }
         };
 
@@ -165,6 +238,10 @@ const RTCEngine = {
         RTCUI.toggleVideoUI(false);
         RTCUI.elements.remoteVideo.srcObject = null;
         RTCUI.elements.localVideo.srcObject = null;
+        
+        // مسح تأثيرات البلور عند إنهاء المكالمة
+        document.querySelectorAll('canvas[class^="call-video-blur-"]').forEach(c => c.remove());
+        
         console.log("[WebRTC] تم إنهاء المكالمة");
     }
 };
@@ -218,6 +295,9 @@ window.flipCamera = async () => {
         RTCState.localStream.addTrack(newVideoTrack);
         RTCUI.elements.localVideo.srcObject = RTCState.localStream;
 
+        // إعادة تشغيل تأثير البلور للكاميرا الجديدة
+        applyVideoCanvasBlur(RTCUI.elements.localVideo, false);
+
         // تحديث المسار في سيرفر الـ Go بدون ما نفصل المكالمة
         if (RTCState.pc) {
             const sender = RTCState.pc.getSenders().find(s => s.track && s.track.kind === 'video');
@@ -231,7 +311,7 @@ window.flipCamera = async () => {
 };
 
 // ==========================================
-// Auto-hide video section on load
+// Initialization & Cleanup
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     RTCUI.toggleVideoUI(false);
