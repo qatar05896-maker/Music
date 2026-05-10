@@ -108,10 +108,31 @@
     </div>
 
     <!-- ========================================== -->
-    <!-- 4. ربط ملفات الجافاسكريبت                 -->
+    <!-- 4. قائمة الرسائل الزجاجية (Context Menu)   -->
+    <!-- ========================================== -->
+    <div id="message-context-menu" class="glass-context-menu hidden">
+        <div class="context-menu-item" id="menu-reply">
+            <i class="fa-solid fa-reply"></i> رد
+        </div>
+        <div class="context-menu-item" id="menu-copy">
+            <i class="fa-solid fa-copy"></i> نسخ
+        </div>
+        <div class="context-menu-item" id="menu-edit">
+            <i class="fa-solid fa-pen"></i> تعديل
+        </div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item danger" id="menu-delete">
+            <i class="fa-solid fa-trash"></i> مسح
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 5. ربط ملفات الجافاسكريبت                 -->
     <!-- ========================================== -->
     <script src="js/auth.js"></script>
     <script src="js/webrtc.js"></script>
+    <script src="js/ui_core.js"></script>
+    <script src="js/ui_integration.js"></script>
     <script src="js/chat.js"></script>
 
 </body>
