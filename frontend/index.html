@@ -2,133 +2,233 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <!-- دعم الشاشات الكاملة (Notch) في الموبايل وجعله يتصرف كتطبيق Native -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#000000">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
+    <meta name="description" content="Platform 2026 - Next Gen Messaging Experience">
+    
     <title>Platform 2026 | Dark Glass Engine</title>
 
-    <!-- FontAwesome للأيقونات (الإصدار الأحدث) -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    
-    <!-- ملف التنسيقات الرئيسي -->
     <link rel="stylesheet" href="css/styles.css">
 </head>
-<body class="theme-dark">
+<body class="theme-dark iphone-render">
 
-    <!-- ========================================== -->
-    <!-- 1. خلفية زجاجية متحركة (Blobs)             -->
-    <!-- ========================================== -->
     <div class="background-blobs">
         <div class="blob blob-1"></div>
         <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+        <div class="noise-overlay"></div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- 2. شاشة تسجيل الدخول (Auth Overlay)        -->
-    <!-- ========================================== -->
-    <div id="auth-modal" class="auth-overlay active glass-panel">
-        <div class="glass-modal">
-            <div class="logo-area">
-                <i class="fa-brands fa-telegram"></i>
-            </div>
-            <h2 id="auth-title">تسجيل الدخول</h2>
-            <p id="auth-subtitle">أدخل رقم هاتفك للمتابعة</p>
-            
-            <!-- حقل رقم الهاتف -->
-            <div class="input-group">
-                <i class="fa-solid fa-phone"></i>
-                <input type="tel" id="phoneInput" placeholder="رقم الهاتف (مثال: 2010...)" autocomplete="off">
-            </div>
-
-            <!-- حقل رمز التحقق (OTP) - مخفي افتراضياً -->
-            <div class="input-group hidden" id="otp-group">
-                <i class="fa-solid fa-lock"></i>
-                <input type="text" id="otpInput" placeholder="الرمز (6 أرقام)" maxlength="6" autocomplete="off">
-            </div>
-
-            <button id="btn-auth" class="ios-btn primary" onclick="handleAuth()">التالي</button>
-            <p id="auth-error" class="error-msg"></p>
-        </div>
-    </div>
-
-    <!-- ========================================== -->
-    <!-- 3. الهيكل الرئيسي للتطبيق (App Layout)     -->
-    <!-- مخفي حتى يتم تسجيل الدخول بنجاح            -->
-    <!-- ========================================== -->
-    <div id="app-container" class="telegram-app-layout hidden">
-        
-        <!-- أداة مكالمات الفيديو (Picture-in-Picture) عائمة فوق الشات -->
-        <div id="video-overlay" class="video-pip video-section hidden glass-panel">
-            <div class="video-wrapper">
-                <!-- الفيديوهات -->
-                <video id="remoteVideo" autoplay playsinline></video>
-                <video id="localVideo" autoplay muted playsinline></video>
-                
-                <!-- أزرار التحكم في المكالمة -->
-                <div class="call-controls">
-                    <button id="btn-mic" class="control-btn active" onclick="toggleMic()">
-                        <i class="fa-solid fa-microphone"></i>
+    <section id="auth-modal" class="auth-overlay active">
+        <div class="glass-modal blur-ios">
+            <div class="auth-container">
+                <div class="logo-area animation-float">
+                    <i class="fa-brands fa-telegram"></i>
+                </div>
+                <div class="auth-content-switcher">
+                    <div id="step-phone" class="auth-step">
+                        <h2 id="auth-title">منصة 2026</h2>
+                        <p id="auth-subtitle">أدخل رقم هاتفك بترميز دولي</p>
+                        <div class="input-group glass-input">
+                            <i class="fa-solid fa-globe"></i>
+                            <input type="tel" id="phoneInput" placeholder="2010XXXXXXXX" autocomplete="phone">
+                        </div>
+                    </div>
+                    <div id="step-otp" class="auth-step hidden">
+                        <h2>تأكيد الرمز</h2>
+                        <p>أدخل الكود المرسل في رسالة نصية</p>
+                        <div class="input-group glass-input">
+                            <i class="fa-solid fa-shield-halved"></i>
+                            <input type="text" id="otpInput" placeholder="000000" maxlength="6">
+                        </div>
+                    </div>
+                </div>
+                <div class="auth-actions">
+                    <button id="btn-auth" class="ios-btn primary-glow" onclick="handleAuth()">
+                        <span>استمرار</span>
+                        <i class="fa-solid fa-arrow-left"></i>
                     </button>
-                    <button id="btn-cam" class="control-btn active" onclick="toggleCam()">
-                        <i class="fa-solid fa-video"></i>
-                    </button>
-                    <button id="btn-flip" class="control-btn" onclick="flipCamera()">
-                        <i class="fa-solid fa-camera-rotate"></i>
-                    </button>
-                    <button id="btn-end" class="control-btn danger" onclick="RTCEngine.endCall()">
-                        <i class="fa-solid fa-phone-slash"></i>
-                    </button>
+                    <p id="auth-error" class="error-msg"></p>
                 </div>
             </div>
         </div>
+    </section>
 
-        <!-- الحاوية الأساسية للشات -->
-        <!-- ملف chat.js (ChatUI.buildLayout) سيقوم بحقن القائمة الجانبية والشات هنا -->
-        <div class="chat-section w-100 h-100">
-            <!-- جافاسكريبت سيبني الواجهة هنا -->
-        </div>
+    <main id="app-container" class="telegram-app-layout hidden">
+        
+        <aside class="sidebar-left glass-effect" id="tg-sidebar">
+            <div class="sidebar-header">
+                <div class="menu-toggle" onclick="toggleMainMenu()">
+                    <i class="fa-solid fa-bars"></i>
+                </div>
+                <div class="search-bar-container">
+                    <div class="glass-search">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="global-search" placeholder="بحث">
+                    </div>
+                </div>
+            </div>
 
-        <!-- القائمة الجانبية اليمنى (معلومات الحساب والميديا) مخفية افتراضياً -->
-        <!-- يتم فتحها عند الضغط على اسم المستخدم في أعلى الشات -->
-        <div class="right-sidebar hidden glass-panel" id="right-sidebar">
-            <div class="profile-header">
-                <button class="close-sidebar-btn" onclick="toggleRightSidebar()">
-                    <i class="fa-solid fa-xmark"></i>
+            <nav class="chat-filters-bar">
+                <div class="filter-item active">الكل</div>
+                <div class="filter-item">شخصي</div>
+                <div class="filter-item">مجموعات</div>
+                <div class="filter-item">قنوات</div>
+                <div class="filter-item">بوتات</div>
+            </nav>
+
+            <div class="contacts-scroll-area custom-scrollbar" id="contacts-list">
+            </div>
+
+            <div class="floating-action-btn">
+                <i class="fa-solid fa-pen"></i>
+            </div>
+        </aside>
+
+        <section class="main-chat-view" id="chat-section">
+            <div class="tg-main w-100 h-100">
+                <header class="tg-header blur-ios">
+                    <div class="header-left-actions">
+                        <button class="tg-input-btn back-button-mobile" id="mobile-back-btn" onclick="goBackToSidebar()">
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                    <div class="header-user-info" onclick="ChatUI.showChatInfo()">
+                        <div class="tg-avatar animation-press" id="current-chat-avatar"></div>
+                        <div class="tg-header-details">
+                            <h3 id="current-chat-name">المحادثة</h3>
+                            <span class="tg-header-status" id="current-chat-status">جاري التحميل...</span>
+                        </div>
+                    </div>
+                    <div class="header-right-actions">
+                        <i class="fa-solid fa-phone-volume call-trigger" onclick="window.startCall()"></i>
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <div class="dropdown-trigger">
+                            <i class="fa-solid fa-ellipsis-vertical"></i>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="tg-voice-banner hidden" id="voice-chat-banner" onclick="window.startCall()">
+                    <div class="tg-voice-banner-info">
+                        <div class="pulse-icon"><i class="fa-solid fa-microphone-lines"></i></div>
+                        <span>مكالمة فيديو نشطة</span>
+                    </div>
+                    <button class="tg-voice-banner-btn">انضمام</button>
+                </div>
+
+                <div class="messages-container-wrapper">
+                    <div class="tg-messages virtual-list custom-scrollbar" id="messages-container">
+                    </div>
+                    <div class="scroll-down-btn hidden">
+                        <i class="fa-solid fa-chevron-down"></i>
+                        <span class="unread-badge">5</span>
+                    </div>
+                </div>
+
+                <footer class="tg-input-area blur-ios">
+                    <div class="input-wrapper-inner">
+                        <button class="tg-input-btn attach-btn">
+                            <i class="fa-solid fa-paperclip"></i>
+                        </button>
+                        <div class="expanding-input-container">
+                            <textarea id="chatInput" placeholder="رسالة..." rows="1"></textarea>
+                            <div class="input-modifiers">
+                                <i class="fa-regular fa-face-smile emoji-trigger"></i>
+                            </div>
+                        </div>
+                        <button class="tg-send-btn active-press" id="btn-send-toggle" onclick="window.sendChatMessage()">
+                            <i class="fa-solid fa-microphone" id="send-icon"></i>
+                        </button>
+                    </div>
+                </footer>
+            </div>
+        </section>
+
+        <aside class="right-sidebar hidden blur-ios-dark" id="right-sidebar">
+            <div class="profile-header-sticky">
+                <div class="profile-top-actions">
+                    <button class="close-sidebar-btn" onclick="toggleRightSidebar()">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                    <span>المعلومات</span>
+                    <i class="fa-solid fa-pen-to-square"></i>
+                </div>
+            </div>
+            <div class="profile-scroll-content custom-scrollbar" id="profile-content-area">
+            </div>
+        </aside>
+
+    </main>
+
+    <div id="video-overlay" class="video-pip hidden glass-panel blur-ios animation-scale-up">
+        <div class="video-wrapper">
+            <div class="remote-video-container">
+                <video id="remoteVideo" autoplay playsinline></video>
+                <div class="video-status-overlay">
+                    <span id="remote-user-name">أحمد</span>
+                    <span class="call-timer">00:00</span>
+                </div>
+            </div>
+            <div class="local-video-container glass-card">
+                <video id="localVideo" autoplay muted playsinline></video>
+                <div class="local-video-actions">
+                    <i class="fa-solid fa-camera-rotate" onclick="flipCamera()"></i>
+                </div>
+            </div>
+            <div class="call-controls-floating blur-ios">
+                <button id="btn-mic" class="control-btn" onclick="toggleMic()">
+                    <i class="fa-solid fa-microphone"></i>
                 </button>
-                <h3>معلومات الحساب</h3>
-            </div>
-            <div class="profile-content" id="profile-content-area">
-                <!-- محتوى البروفايل (صور، ملفات، روابط) سيتم حقنه هنا -->
+                <button id="btn-cam" class="control-btn" onclick="toggleCam()">
+                    <i class="fa-solid fa-video"></i>
+                </button>
+                <button id="btn-end" class="control-btn danger-ios" onclick="RTCEngine.endCall()">
+                    <i class="fa-solid fa-phone-slash"></i>
+                </button>
             </div>
         </div>
-
     </div>
 
-    <!-- ========================================== -->
-    <!-- 4. قائمة الرسائل الزجاجية (Context Menu)   -->
-    <!-- ========================================== -->
-    <div id="message-context-menu" class="glass-context-menu hidden">
-        <div class="context-menu-item" id="menu-reply">
-            <i class="fa-solid fa-reply"></i> رد
+    <div id="message-context-menu" class="glass-context-menu hidden blur-ios-heavy">
+        <div class="context-menu-item ripple" id="menu-reply">
+            <i class="fa-solid fa-reply-all"></i>
+            <span>رد</span>
         </div>
-        <div class="context-menu-item" id="menu-copy">
-            <i class="fa-solid fa-copy"></i> نسخ
+        <div class="context-menu-item ripple" id="menu-copy">
+            <i class="fa-solid fa-copy"></i>
+            <span>نسخ النص</span>
         </div>
-        <div class="context-menu-item" id="menu-edit">
-            <i class="fa-solid fa-pen"></i> تعديل
+        <div class="context-menu-item ripple" id="menu-edit">
+            <i class="fa-solid fa-signature"></i>
+            <span>تعديل</span>
+        </div>
+        <div class="context-menu-item ripple" id="menu-forward">
+            <i class="fa-solid fa-share"></i>
+            <span>توجيه</span>
+        </div>
+        <div class="context-menu-item ripple" id="menu-pin">
+            <i class="fa-solid fa-thumbtack"></i>
+            <span>تثبيت</span>
         </div>
         <div class="context-menu-divider"></div>
-        <div class="context-menu-item danger" id="menu-delete">
-            <i class="fa-solid fa-trash"></i> مسح
+        <div class="context-menu-item danger ripple" id="menu-delete">
+            <i class="fa-solid fa-trash-can"></i>
+            <span>حذف</span>
         </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- 5. ربط ملفات الجافاسكريبت                 -->
-    <!-- ========================================== -->
+    <div class="global-modals-container">
+        <div id="sticker-picker" class="picker-overlay hidden blur-ios"></div>
+        <div id="emoji-picker" class="picker-overlay hidden blur-ios"></div>
+    </div>
+
+    <div id="toast-container"></div>
+
     <script src="js/auth.js"></script>
     <script src="js/webrtc.js"></script>
     <script src="js/ui_core.js"></script>
